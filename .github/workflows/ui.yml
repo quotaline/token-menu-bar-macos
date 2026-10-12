@@ -209,7 +209,7 @@ jobs:
             .build/ui-profiles
           include-hidden-files: true
           if-no-files-found: error
-          retention-days: 1
+          retention-days: ${{ job.status == 'success' && 1 || 14 }}
       - name: Verify every selected method passed once
         if: ${{ !cancelled() && steps.evidence.outcome == 'success' }}
         env:
@@ -231,7 +231,7 @@ jobs:
           path: .build/ui-results.xcresult
           include-hidden-files: true
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 14
       - name: Retain diagnostic build log
         if: ${{ always() && inputs.group != '' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
