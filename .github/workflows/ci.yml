@@ -79,7 +79,7 @@ jobs:
   lint:
     name: Lint
     if: ${{ !inputs.ui_group }}
-    runs-on: macos-26
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -87,8 +87,6 @@ jobs:
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
           version: 2026.10.7
-      - name: Select Xcode
-        run: Scripts/select-xcode.sh
       - name: Install Python for hooks
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
@@ -96,7 +94,15 @@ jobs:
           activate-environment: true
           enable-cache: false
       - name: Run every hook
+        env:
+          SKIP: swift-format
         run: just lint
+      # The same swift-format the pre-commit hook takes from Xcode, from Swift 6.3.3's Linux toolchain.
+      - name: Check Swift formatting
+        run: |
+          git ls-files -z '*.swift' | docker run --rm -i -v "$PWD:/work" -w /work \
+            swift:6.3.3-noble@sha256:cd45c27b3abc42310c33cfaf3008b18156cbdc9187834c9617e8f43a26d2675c \
+            xargs -0 swift format lint --strict
       - name: Verify native test execution guards
         run: Scripts/test-desktop-guard.sh
       - name: Verify local runner isolation and resource limits
@@ -279,7 +285,7 @@ jobs:
       contents: read
     needs: [runtime-matrix, package-compatibility, coverage, application-ui]
     if: ${{ !cancelled() && needs.runtime-matrix.result == 'success' && !inputs.ui_group }}
-    runs-on: macos-26
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     env:
       RUNTIMES: ${{ join(fromJSON(needs.runtime-matrix.outputs.runtimes), ' ') }}
