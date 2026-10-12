@@ -21,6 +21,7 @@ struct FrameSample: Codable {
 struct WindowFrameTimelineSample: Codable {
   let elapsed: TimeInterval
   let frame: FrameSample
+  let windows: [FrameSample]
 }
 
 final class WindowFrameSampler: @unchecked Sendable {
@@ -80,18 +81,19 @@ final class WindowFrameSampler: @unchecked Sendable {
     guard
       let values = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
         as? [[CFString: Any]],
-      let frame = values.compactMap({ value -> CGRect? in
+      case let windows = values.compactMap({ value -> CGRect? in
         guard
           (value[kCGWindowOwnerPID] as? NSNumber)?.int32Value == processIdentifier,
-          let bounds = value[kCGWindowBounds] as? NSDictionary,
-          let frame = CGRect(dictionaryRepresentation: bounds as CFDictionary),
-          frame.width >= 500, frame.height >= 100
+          let bounds = value[kCGWindowBounds] as? NSDictionary
         else { return nil }
-        return frame
-      }).max(by: { $0.width * $0.height < $1.width * $1.height })
+        return CGRect(dictionaryRepresentation: bounds as CFDictionary)
+      }),
+      let frame = windows.filter({ $0.width >= 500 && $0.height >= 100 })
+        .max(by: { $0.width * $0.height < $1.width * $1.height })
     else { return }
     let sample = WindowFrameTimelineSample(
-      elapsed: ProcessInfo.processInfo.systemUptime - started, frame: FrameSample(frame))
+      elapsed: ProcessInfo.processInfo.systemUptime - started, frame: FrameSample(frame),
+      windows: windows.map(FrameSample.init))
     lock.withLock { samples.append(sample) }
   }
 }
