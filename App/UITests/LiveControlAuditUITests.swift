@@ -180,7 +180,7 @@ final class LiveControlAuditUITests: XCTestCase {
     executionTimeAllowance = 600
     let verification = VerificationApplication(
       testName: name, profile: VerificationProfile(fixture: .controlAudit, nativePanels: true),
-      detailedLogging: tab == "History" || section == .menuBar)
+      detailedLogging: tab == "History" || section == .menuBar || section == .about)
     addTeardownBlock { @MainActor in await verification.terminate() }
     try verification.launch()
     XCTAssertTrue(verification.tabs.waitForExistence(timeout: 5))
@@ -1294,7 +1294,11 @@ final class LiveControlAuditUITests: XCTestCase {
   ) {
     let increment = stepper.descendants(matching: .incrementArrow).firstMatch
     let decrement = stepper.descendants(matching: .decrementArrow).firstMatch
-    XCTAssertTrue(reveal(decrementFirst ? decrement : increment, in: surface))
+    // The previous stepper's last click leaves its rich tooltip up, and it can cover this one.
+    coordinateOutsidePanel(surface, frame: surface.frame).hover()
+    XCTAssertTrue(
+      reveal(decrementFirst ? decrement : increment, in: surface),
+      "Cannot reach the first arrow of \(stepper.identifier)")
     XCTAssertTrue(increment.exists && decrement.exists, "Stepper did not expose increment and decrement arrows")
     let before = String(describing: stepper.value)
     (decrementFirst ? decrement : increment).click()
@@ -1303,7 +1307,9 @@ final class LiveControlAuditUITests: XCTestCase {
       "Stepper \(stepper.identifier) did not change from \(before)")
     // A pointer left on the first arrow raises this control's rich tooltip over the other one.
     coordinateOutsidePanel(surface, frame: surface.frame).hover()
-    XCTAssertTrue(reveal(decrementFirst ? increment : decrement, in: surface))
+    XCTAssertTrue(
+      reveal(decrementFirst ? increment : decrement, in: surface),
+      "Cannot reach the second arrow of \(stepper.identifier)")
     (decrementFirst ? increment : decrement).click()
     XCTAssertTrue(
       waitUntil(timeout: controlTimeout) { String(describing: stepper.value) == before },
