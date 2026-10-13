@@ -1719,7 +1719,10 @@ final class LiveControlAuditUITests: XCTestCase {
     for page in 0..<18 {
       outside.hover()
       let snapshot = try surface.snapshot()
-      XCTAssertEqual(snapshot.frame, frame, "The viewport changed during paged text capture")
+      // The popover follows its status item, which shifts sideways when another menu bar item resizes, such as the
+      // clock at midnight; only a new size or top edge means the viewport itself changed.
+      XCTAssertEqual(snapshot.frame.size, frame.size, "The viewport changed size during paged text capture")
+      XCTAssertEqual(snapshot.frame.minY, frame.minY, "The viewport moved vertically during paged text capture")
       try application.screenshot().pngRepresentation.write(
         to: output.appendingPathComponent("\(prefix)-\(tab.lowercased())-page-\(page).png"))
       checkedBanners += assertVisibleStringsAndControls(
