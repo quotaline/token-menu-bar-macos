@@ -109,6 +109,8 @@ jobs:
         run: Scripts/test-render-capture.sh
       - name: Verify the release reads the commit verdict
         run: bash Scripts/test-commit-verdict.sh
+      - name: Verify runner deadlock detection
+        run: Scripts/test-runner-deadlock.sh
 
   package-compatibility:
     name: Package (${{ matrix.name }}, ${{ matrix.mode }})
