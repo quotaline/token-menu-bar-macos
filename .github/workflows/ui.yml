@@ -198,6 +198,9 @@ jobs:
           if [[ -d .build/ui-results.xcresult ]]; then
             Scripts/export-ui-results.sh .build/ui-results.xcresult .build/ui-results
           fi
+      - name: Name a runner GPU deadlock
+        if: ${{ failure() }}
+        run: Scripts/check-runner-deadlock.sh .build/ui-results .build/ui-profiles
       # Evidence for people, not later jobs: a failing test already fails the job, so an artifact service timeout
       # should not fail one that passed.
       - name: Retain UI results
