@@ -334,17 +334,20 @@ struct VerificationApplication {
 
   private func captureSnapshotTimeout() async {
     do {
-      guard let report = try await requestCPUProfile() else { return }
+      guard let report = try await requestCPUProfile(includingSystem: true) else { return }
       try await attachCPUProfile(report, name: "Process snapshot timeout CPU sample")
     } catch {
       print("Could not sample the verification process after its snapshot timed out: \(error)")
     }
   }
 
-  func requestCPUProfile() async throws -> URL? {
+  /// `includingSystem` also asks for a system-wide spindump: a stalled app can be waiting on another process, such as
+  /// WindowServer, whose stacks the app sample cannot show.
+  func requestCPUProfile(includingSystem: Bool = false) async throws -> URL? {
     guard let path = ProcessInfo.processInfo.environment["TMB_PROFILE_DIRECTORY"] else { return nil }
     let directory = URL(fileURLWithPath: path).appendingPathComponent(UUID().uuidString, isDirectory: true)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    if includingSystem { try Data().write(to: directory.appendingPathComponent("spindump")) }
     let request = directory.appendingPathComponent("request")
     let snapshot = supportDirectory.appendingPathComponent("process-snapshot.json")
     let deadline = Date().addingTimeInterval(2)
