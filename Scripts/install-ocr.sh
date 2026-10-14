@@ -4,6 +4,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 source Scripts/check-test-desktop.sh
 
+# Linux images ship Homebrew off PATH; the later OCR steps need tesseract on it too.
+if ! command -v brew > /dev/null && [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  echo "$HOMEBREW_PREFIX/bin" >> "$GITHUB_PATH"
+fi
 export HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_FROM_API=1
 export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_NO_INSTALL_CLEANUP=1
 

@@ -20,7 +20,7 @@ for command in \
     exit 1
   fi
 done
-xcrun clang -Wall -Wextra -Werror Tests/TokenMenuBarNativeGuard/NativeDesktop.c \
+clang -Wall -Wextra -Werror Tests/TokenMenuBarNativeGuard/NativeDesktop.c \
   Tests/NativeDesktopGuardProbe/main.c -o "$probe_directory/probe"
 
 reject() {
@@ -47,7 +47,7 @@ reject "${clean[@]}" TOKEN_MENU_BAR_TEST_DESKTOP=github-hosted GITHUB_ACTIONS=fa
   RUNNER_ENVIRONMENT=github-hosted "$probe_directory/probe" > "$probe_directory/stdout"
 [[ "$(< "$probe_directory/stdout")" == 'test body reached' ]]
 
-xcrun clang -Wall -Wextra -Werror -DTOKEN_MENU_BAR_APPLICATION_UI_TESTS=1 \
+clang -Wall -Wextra -Werror -DTOKEN_MENU_BAR_APPLICATION_UI_TESTS=1 \
   Tests/TokenMenuBarNativeGuard/NativeDesktop.c Tests/NativeDesktopGuardProbe/main.c -o "$probe_directory/application-probe"
 reject "${clean[@]}" "$probe_directory/application-probe"
 "${clean[@]}" TOKEN_MENU_BAR_TEST_DESKTOP=local-verification \
